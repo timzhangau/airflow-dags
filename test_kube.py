@@ -9,13 +9,16 @@ from airflow.contrib.kubernetes.volume import Volume
 default_args = {
     'owner': 'timzhang',
     'depends_on_past': False,
-    'start_date': datetime.utcnow(),
+    'start_date': datetime(2019, 1, 1),
     'email': ['tim.zhang@newsmartwealth.com'],
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
-    'retry_delay': timedelta(minutes=2)
+    'retry_delay': timedelta(minutes=2),
 }
+
+# run every day at midnight
+schedule = '0 0 * * *'
 
 resource = Resources(
     request_memory='100Mi',
@@ -40,9 +43,7 @@ volume_config= {
 volume = Volume(name='newsspider-vol', configs=volume_config)
 
 
-
-
-dag = DAG('kubernetes_sample', default_args=default_args, schedule_interval=timedelta(minutes=10))
+dag = DAG('kubernetes_sample', default_args=default_args, schedule_interval=schedule, catchup=False)
 
 
 # start = DummyOperator(task_id='run_this_first', dag=dag)
@@ -50,9 +51,7 @@ dag = DAG('kubernetes_sample', default_args=default_args, schedule_interval=time
 passing = KubernetesPodOperator(
     namespace='scrapy',
     image="timzhangau/scrapy",
-    cmds=["scrapy","crawl","wsj_spider","-a","news_date=2018-10-25"],
-    # arguments=["print('hello world')"],
-    # labels={"foo": "bar"},
+    cmds=["scrapy","crawl","wsj_spider","-a",'news_date={{ macros.ds_add(ds, -1) }}'],
     resources=resource,
     volumes=[volume],
     volume_mounts=[volume_mount],
