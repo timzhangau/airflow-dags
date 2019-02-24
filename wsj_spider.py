@@ -18,19 +18,20 @@ default_args = {
     "retry_delay": timedelta(minutes=2),
 }
 
-# run every day at midnight
-schedule = "0 0 * * *"
+# run every day at 1am
+schedule = "0 1 * * *"
 
 resource = Resources(
-    request_memory="100Mi", request_cpu="100m", limit_memory="1000Mi", limit_cpu="100m"
+    request_memory="100Mi", request_cpu="100m", limit_memory="300Mi", limit_cpu="300m"
 )
 
-volume_mount = VolumeMount(
-    "newsspider-vol", mount_path="/app", sub_path="newsspider", read_only=True
-)
-
-volume_config = {"persistentVolumeClaim": {"claimName": "newsspider-pvc"}}
-volume = Volume(name="newsspider-vol", configs=volume_config)
+# # no longer requires volume mount as source code now built in image using private repo
+# volume_mount = VolumeMount(
+#     "newsspider-vol", mount_path="/app", sub_path="newsspider", read_only=True
+# )
+#
+# volume_config = {"persistentVolumeClaim": {"claimName": "newsspider-pvc"}}
+# volume = Volume(name="newsspider-vol", configs=volume_config)
 
 
 dag = DAG(
@@ -41,19 +42,20 @@ dag = DAG(
 # start = DummyOperator(task_id='run_this_first', dag=dag)
 
 # kube operator name cannot contain '_'
-passing = KubernetesPodOperator(
+wsj_spider_task = KubernetesPodOperator(
     namespace="scrapy",
     image="timzhangau/scrapy",
+    image_pull_secrets="docker-hub-timzhangau-repo",
     cmds=[
         "scrapy",
         "crawl",
         "wsj_spider",
         "-a",
-        "news_date={{ macros.ds_add(ds, -1) }}",
+        "news_date={{ macros.ds_add(ds, 0) }}",
     ],
     resources=resource,
-    volumes=[volume],
-    volume_mounts=[volume_mount],
+    # volumes=[volume],
+    # volume_mounts=[volume_mount],
     name="wsj-spider-kube-operator",
     task_id="wsj_spider_kube_operator",
     config_file="/usr/local/airflow/.kube/config",
