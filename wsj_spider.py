@@ -10,7 +10,7 @@ from utils.callback import slack_failure_callback, slack_success_callback
 default_args = {
     "owner": "timzhang",
     "depends_on_past": False,
-    "start_date": datetime(2019, 1, 1),
+    "start_date": datetime(2000, 1, 1),
     "email": ["tim.zhang@newsmartwealth.com"],
     "email_on_failure": False,
     "email_on_retry": False,
@@ -22,7 +22,7 @@ default_args = {
 schedule = "0 1 * * *"
 
 resource = Resources(
-    request_memory="100Mi", request_cpu="100m", limit_memory="300Mi", limit_cpu="300m"
+    request_memory="100Mi", request_cpu="100m", limit_memory="250Mi", limit_cpu="250m"
 )
 
 # # no longer requires volume mount as source code now built in image using private repo
