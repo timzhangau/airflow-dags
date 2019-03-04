@@ -22,7 +22,7 @@ default_args = {
 schedule = "0 1 * * *"
 
 resource = Resources(
-    request_memory="100Mi", request_cpu="100m", limit_memory="250Mi", limit_cpu="250m"
+    request_memory="100Mi", request_cpu="100m", limit_memory="500Mi", limit_cpu="500m"
 )
 
 # # no longer requires volume mount as source code now built in image using private repo
