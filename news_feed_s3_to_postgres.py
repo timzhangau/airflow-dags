@@ -47,6 +47,7 @@ pipeline_task = KubernetesPodOperator(
     namespace="scrapy",
     image="timzhangau/pipeline",
     image_pull_secrets="docker-hub-timzhangau-repo",
+    image_pull_policy='Always',
     cmds=["python", "newsroom/s3_json_to_postgres.py"],
     resources=resource,
     # volumes=[volume],
