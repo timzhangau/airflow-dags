@@ -18,8 +18,8 @@ default_args = {
     "retry_delay": timedelta(minutes=2),
 }
 
-# run every day at 3am
-schedule = "0 3 * * *"
+# run twice a day at minute 0 past hour 10 and 22
+schedule = "0 10,22 * * *"
 
 resource = Resources(
     request_memory="100Mi", request_cpu="100m", limit_memory="500Mi", limit_cpu="500m"
