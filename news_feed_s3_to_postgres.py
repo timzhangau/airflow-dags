@@ -1,9 +1,6 @@
 from airflow import DAG
 from datetime import datetime, timedelta
-from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
-from airflow.contrib.kubernetes.pod import Resources
-from airflow.contrib.kubernetes.volume_mount import VolumeMount
-from airflow.contrib.kubernetes.volume import Volume
+from airflow.contrib.operators.ecs_operator import ECSOperator
 from utils.callback import slack_failure_callback, slack_success_callback
 
 
@@ -21,18 +18,30 @@ default_args = {
 # run twice a day at minute 0 past hour 10 and 22
 schedule = "0 10,22 * * *"
 
-resource = Resources(
-    request_memory="100Mi", request_cpu="100m", limit_memory="500Mi", limit_cpu="500m"
-)
+# vpc and security group setting
+network_config = {
+    "awsvpcConfiguration": {
+        "subnets": ["subnet-ca3f40ae"],
+        "assignPublicIp": "ENABLED",  # keep it enabled otherwise will fail to pull the image
+        "securityGroups": ["sg-0d4dcc43101c562ef"],
+    }
+}
 
-# # no longer requires volume mount as source code now built in image using private repo
-# volume_mount = VolumeMount(
-#     "newsspider-vol", mount_path="/app", sub_path="newsspider", read_only=True
-# )
-#
-# volume_config = {"persistentVolumeClaim": {"claimName": "newsspider-pvc"}}
-# volume = Volume(name="newsspider-vol", configs=volume_config)
+overrides_config = {
+    "containerOverrides": [
+        {
+            "name": "news-feed-s3-to-postgres",
+            "command": ["python", "newsroom/s3_json_to_postgres.py",],
+            # "environment": [{"name": "string", "value": "string"},],
+        }
+    ]
+}
 
+log_config = {
+    "awslogs_group": "/ecs/news-feed-s3-to-postgres",
+    "awslogs_region": "ap-southeast-2",
+    "awslogs_stream_prefix": "ecs",
+}
 
 dag = DAG(
     "news_feed_s3_to_postgres",
@@ -41,23 +50,18 @@ dag = DAG(
     catchup=False,
 )
 
-
-# kube operator name cannot contain '_'
-pipeline_task = KubernetesPodOperator(
-    namespace="scrapy",
-    image="timzhangau/pipeline",
-    image_pull_secrets="docker-hub-timzhangau-repo",
-    image_pull_policy='Always',
-    cmds=["python", "newsroom/s3_json_to_postgres.py"],
-    resources=resource,
-    # volumes=[volume],
-    # volume_mounts=[volume_mount],
-    name="pipeline-s3-to-postgres",
-    task_id="s3_to_postgres_kube_operator",
-    config_file="/usr/local/airflow/.kube/config",
-    get_logs=True,
-    is_delete_operator_pod=True,
+pipeline_task = ECSOperator(
+    aws_conn_id="aws_default",
+    task_id="s3_to_postgres_ecs_operator",
+    region_name="ap-southeast-2",
+    cluster="airflow",
+    launch_type="FARGATE",
+    task_definition="news-feed-s3-to-postgres:2",
+    platform_version="LATEST",
+    network_configuration=network_config,
+    overrides=overrides_config,
     dag=dag,
     on_success_callback=slack_success_callback,
     on_failure_callback=slack_failure_callback,
+    **log_config,
 )
