@@ -38,9 +38,9 @@ overrides_config = {
 }
 
 log_config = {
-    "awslogs_group": "/ecs/news-feed-s3-to-postgres",
+    "awslogs_group": "/airflow/news-feed-s3-to-postgres",
     "awslogs_region": "ap-southeast-2",
-    "awslogs_stream_prefix": "ecs",
+    "awslogs_stream_prefix": "ecs/news-feed-s3-to-postgres",
 }
 
 dag = DAG(
@@ -56,7 +56,7 @@ pipeline_task = ECSOperator(
     region_name="ap-southeast-2",
     cluster="airflow",
     launch_type="FARGATE",
-    task_definition="news-feed-s3-to-postgres:2",
+    task_definition="news-feed-s3-to-postgres:3",
     platform_version="LATEST",
     network_configuration=network_config,
     overrides=overrides_config,
