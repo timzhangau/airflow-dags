@@ -55,6 +55,7 @@ dag = DAG(
 )
 
 afr_spider_task = ECSOperator(
+    aws_conn_id="aws_default",
     task_id="afr_spider_ecs_operator",
     region_name="ap-southeast-2",
     cluster="airflow",
