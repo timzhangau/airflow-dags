@@ -1,9 +1,6 @@
 from airflow import DAG
 from datetime import datetime, timedelta
-from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
-from airflow.contrib.kubernetes.pod import Resources
-from airflow.contrib.kubernetes.volume_mount import VolumeMount
-from airflow.contrib.kubernetes.volume import Volume
+from airflow.contrib.operators.ecs_operator import ECSOperator
 from utils.callback import slack_failure_callback, slack_success_callback
 
 
@@ -21,47 +18,55 @@ default_args = {
 # run twice a day at minute 0 past hour 9 and 21
 schedule = "0 9,21 * * *"
 
-resource = Resources(
-    request_memory="100Mi", request_cpu="100m", limit_memory="500Mi", limit_cpu="500m"
-)
+# vpc and security group setting
+network_config = {
+    "awsvpcConfiguration": {
+        "subnets": ["subnet-ca3f40ae"],
+        "assignPublicIp": "ENABLED",  # keep it enabled otherwise will fail to pull the image
+        "securityGroups": ["sg-0d4dcc43101c562ef"],
+    }
+}
 
-# # no longer requires volume mount as source code now built in image using private repo
-# volume_mount = VolumeMount(
-#     "newsspider-vol", mount_path="/app", sub_path="newsspider", read_only=True
-# )
-#
-# volume_config = {"persistentVolumeClaim": {"claimName": "newsspider-pvc"}}
-# volume = Volume(name="newsspider-vol", configs=volume_config)
+overrides_config = {
+    "containerOverrides": [
+        {
+            "name": "news-feed-afr-spider",
+            "command": [
+                "scrapy",
+                "crawl",
+                "afr_spider",
+                "-a",
+                "news_date={{ macros.ds_add(ds, 0) }}",
+            ],
+            # "environment": [{"name": "string", "value": "string"},],
+        }
+    ]
+}
+
+log_config = {
+    "awslogs_group": "/ecs/news-feed-afr-spider",
+    "awslogs_region": "ap-southeast-2",
+    "awslogs_stream_prefix": "ecs",
+}
 
 
 dag = DAG(
     "afr_spider", default_args=default_args, schedule_interval=schedule, catchup=False
 )
 
-
-# start = DummyOperator(task_id='run_this_first', dag=dag)
-
-# kube operator name cannot contain '_'
-afr_spider_task = KubernetesPodOperator(
-    namespace="scrapy",
-    image="timzhangau/scrapy",
-    image_pull_secrets="docker-hub-timzhangau-repo",
-    cmds=[
-        "scrapy",
-        "crawl",
-        "afr_spider",
-        "-a",
-        "news_date={{ macros.ds_add(ds, 0) }}",
-    ],
-    resources=resource,
-    # volumes=[volume],
-    # volume_mounts=[volume_mount],
-    name="afr-spider-kube-operator",
-    task_id="afr_spider_kube_operator",
+afr_spider_task = ECSOperator(
+    task_id="afr_spider_ecs_operator",
+    region_name="ap-southeast-2",
+    cluster="airflow",
+    launch_type="FARGATE",
+    task_definition="news-feed-afr-spider:1",
+    platform_version="LATEST",
+    network_configuration=network_config,
+    overrides=overrides_config,
+    name="afr-spider-ecs-operator",
     config_file="/usr/local/airflow/.kube/config",
-    get_logs=True,
-    is_delete_operator_pod=True,
     dag=dag,
     on_success_callback=slack_success_callback,
     on_failure_callback=slack_failure_callback,
+    **log_config,
 )
