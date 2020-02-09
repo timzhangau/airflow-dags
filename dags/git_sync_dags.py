@@ -6,10 +6,10 @@ from .utils.callback import slack_failure_callback, slack_success_callback
 
 
 default_args = {
-    'owner': 'airflow@spitfire',
+    'owner': 'timzhang',
     'start_date': datetime(2018, 11, 23),
     'retries': 1,
-    'email': ['tim@spitfire.io'],
+    'email': ['tim.zhang@newsmartwealth.com'],
     'email_on_failure': False,
     'depends_on_past': False,
 }
