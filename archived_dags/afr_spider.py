@@ -2,9 +2,7 @@ from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
 from airflow.contrib.kubernetes.pod import Resources
-from airflow.contrib.kubernetes.volume_mount import VolumeMount
-from airflow.contrib.kubernetes.volume import Volume
-from utils.callback import slack_failure_callback, slack_success_callback
+from dags.utils.callback import slack_failure_callback, slack_success_callback
 
 
 default_args = {

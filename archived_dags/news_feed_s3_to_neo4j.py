@@ -2,9 +2,7 @@ from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
 from airflow.contrib.kubernetes.pod import Resources
-from airflow.contrib.kubernetes.volume_mount import VolumeMount
-from airflow.contrib.kubernetes.volume import Volume
-from utils.callback import slack_failure_callback, slack_success_callback
+from dags.utils.callback import slack_failure_callback, slack_success_callback
 
 
 default_args = {
@@ -18,11 +16,11 @@ default_args = {
     "retry_delay": timedelta(minutes=2),
 }
 
-# run twice a day at minute 0 past hour 10 and 22
-schedule = "0 10,22 * * *"
+# run twice a day at minute 15 past hour 10 and 22
+schedule = "15 10,22 * * *"
 
 resource = Resources(
-    request_memory="100Mi", request_cpu="100m", limit_memory="500Mi", limit_cpu="500m"
+    request_memory="500Mi", request_cpu="250m", limit_memory="1000Mi", limit_cpu="500m"
 )
 
 # # no longer requires volume mount as source code now built in image using private repo
@@ -35,7 +33,7 @@ resource = Resources(
 
 
 dag = DAG(
-    "news_feed_s3_to_postgres",
+    "news_feed_s3_to_neo4j",
     default_args=default_args,
     schedule_interval=schedule,
     catchup=False,
@@ -48,12 +46,12 @@ pipeline_task = KubernetesPodOperator(
     image="timzhangau/pipeline",
     image_pull_secrets="docker-hub-timzhangau-repo",
     image_pull_policy='Always',
-    cmds=["python", "newsroom/s3_json_to_postgres.py"],
+    cmds=["python", "newsroom/s3_json_to_neo4j.py"],
     resources=resource,
     # volumes=[volume],
     # volume_mounts=[volume_mount],
-    name="pipeline-s3-to-postgres",
-    task_id="s3_to_postgres_kube_operator",
+    name="pipeline-s3-to-neo4j",
+    task_id="s3_to_neo4j_kube_operator",
     config_file="/usr/local/airflow/.kube/config",
     get_logs=True,
     is_delete_operator_pod=True,

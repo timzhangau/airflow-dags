@@ -1,7 +1,7 @@
 import datetime
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
-from utils.callback import slack_failure_callback, slack_success_callback
+from dags.utils.callback import slack_success_callback
 
 
 
