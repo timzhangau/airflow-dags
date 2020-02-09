@@ -1,0 +1,56 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AmazonECSTaskExecutionRolePolicy",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "GetAllSecretValue",
+      "Effect": "Allow",
+      "Action": "secretsmanager:GetSecretValue",
+      "Resource": "*"
+    },
+    {
+      "Sid": "AmazonS3FullAccess",
+      "Effect": "Allow",
+      "Action": "s3:*",
+      "Resource": "*"
+    },
+    {
+      "Sid": "RDSDataServiceAccess",
+      "Effect": "Allow",
+      "Action": [
+        "dbqms:CreateFavoriteQuery",
+        "dbqms:DescribeFavoriteQueries",
+        "dbqms:UpdateFavoriteQuery",
+        "dbqms:DeleteFavoriteQueries",
+        "dbqms:GetQueryString",
+        "dbqms:CreateQueryHistory",
+        "dbqms:DescribeQueryHistory",
+        "dbqms:UpdateQueryHistory",
+        "dbqms:DeleteQueryHistory",
+        "rds-data:ExecuteSql",
+        "rds-data:ExecuteStatement",
+        "rds-data:BatchExecuteStatement",
+        "rds-data:BeginTransaction",
+        "rds-data:CommitTransaction",
+        "rds-data:RollbackTransaction",
+        "secretsmanager:CreateSecret",
+        "secretsmanager:ListSecrets",
+        "secretsmanager:GetRandomPassword",
+        "tag:GetResources"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
