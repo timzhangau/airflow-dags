@@ -1,7 +1,7 @@
 from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.contrib.operators.ecs_operator import ECSOperator
-from .utils.callback import slack_failure_callback, slack_success_callback
+from utils.callback import slack_failure_callback, slack_success_callback
 
 
 default_args = {
