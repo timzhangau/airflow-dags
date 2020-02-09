@@ -16,7 +16,8 @@ default_args = {
 }
 
 # run twice a day at minute 0 past hour 9 and 21
-schedule = "0 9,21 * * *"
+# schedule = "0 9,21 * * *"
+schedule = "0 9 * * *"
 
 # vpc and security group setting
 network_config = {
