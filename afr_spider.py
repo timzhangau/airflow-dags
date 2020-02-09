@@ -23,7 +23,7 @@ network_config = {
     "awsvpcConfiguration": {
         "subnets": ["subnet-ca3f40ae"],
         "assignPublicIp": "ENABLED",  # keep it enabled otherwise will fail to pull the image
-        "securityGroups": ["sg-0d4dcc43101c562ef"],
+        "securityGroups": ["sg-0b06af062af4bcd99"],
     }
 }
 
@@ -44,9 +44,9 @@ overrides_config = {
 }
 
 log_config = {
-    "awslogs_group": "/ecs/news-feed-afr-spider",
+    "awslogs_group": "airflow/news-feed-afr-spider",
     "awslogs_region": "ap-southeast-2",
-    "awslogs_stream_prefix": "ecs",
+    "awslogs_stream_prefix": "ecs/news-feed-afr-spider",  # need to append the task container name here
 }
 
 
